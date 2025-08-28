@@ -38,7 +38,7 @@ export default function App(){
             <Card style={glassStyle} className="rounded-4 p-2">
               <Card.Body className="p-4">
                 <div className="d-flex align-items-center mb-3"><div className="text-success fw-bold me-2 fs-5">Start</div><h2 className="h5 mb-0 text-info">Prediction</h2></div>
-                <Form.Label htmlFor="link" className="text-warning">Amazon Product Link (must contain <code>/dp/ASIN</code>)</Form.Label>
+                <Form.Label htmlFor="link" className="text-warning">Amazon Product Link (must contain <code className="fs-6">/dp/ASIN</code>)</Form.Label>
                 <InputGroup className="mt-1">
                   <InputGroup.Text className={link&&!isValid?'border-danger text-danger':''}>🔗</InputGroup.Text>
                   <Form.Control id="link" type="text" value={link} onChange={e=>setLink(e.target.value)} placeholder="https://www.amazon.in/.../dp/ABCDEFGHIJ" className={`py-3 ${link&&!isValid?'is-invalid':''}`}/>
@@ -54,9 +54,9 @@ export default function App(){
               <Card.Body className="p-4">
                 <h3 className="h5 fw-bold text-info mb-4">How it works</h3>
                 <ol className="mb-0 ps-3 text-warning">
-                  <li className="mb-3 fs-6">Paste an Amazon link containing <code>/dp/ASIN</code>.</li>
+                  <li className="mb-3 fs-6">Paste an Amazon link containing <code className="fs-6">/dp/ASIN</code>.</li>
                   <li className="mb-3 fs-6">Server scrapes and classifies reviews (<span className="text-success fw-bold">REAL</span>/<span className="text-danger fw-bold">FAKE</span>).</li>
-                  <li className="mb-1 fs-6">Excel download starts automatically (~2 mins).</li>
+                  <li className="mb-1 fs-6">Excel download starts automatically (~1.5 mins).</li>
                 </ol>
               </Card.Body>
             </Card>
