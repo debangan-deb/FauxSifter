@@ -104,14 +104,13 @@ def predict():
         h=wb.add_format({'bold':True,'font_name':'Arial','font_size':14,'align':'center','valign':'vcenter'})
         n=wb.add_format({'font_name':'Arial','font_size':14,'align':'center','valign':'vcenter'})
         sh.set_column('A:H',25); sh.set_column('I:I',20); [sh.set_row(r,28) for r in range(0,11)]
-        if img_buf: sh.insert_image('A1','product.png',{'image_data':img_buf,'x_scale':0.8,'y_scale':0.8})
         sh.merge_range('A1:C10','',n); sh.merge_range('D1:G10',(title or "UNKNOWN").upper(),h)
+        if img_buf: sh.insert_image('A1','product.png',{'image_data':img_buf,'x_scale':0.9,'y_scale':0.9})
         sh.write_row('A14',["SL NO","REVIEW TITLE","REVIEW TEXT","USED TEXT","TEXT SOURCE","REVIEWER","REVIEW DATE","RATING"],h); sh.write('I14','LABELS',h)
     out.seek(0)
     wb2=load_workbook(out); ws=wb2["Sheet1"]; al=Alignment(horizontal='center',vertical='center')
     for r in ws.iter_rows(min_row=1,max_row=ws.max_row,min_col=1,max_col=ws.max_column):
         for c in r: c.alignment=al; c.font=Font(name='Arial',size=14,bold=(c.row==14 or (1<=c.row<=10 and 4<=c.column<=7)))
-    tc=ws["D1"]; tc.value=(title or "UNKNOWN").upper(); tc.font=Font(name='Arial',size=14,bold=True); tc.alignment=al
     model=joblib.load(BASE/"svm_model.pkl"); texts,idx=[],[]
     for r in range(16,ws.max_row+1):
         v=ws.cell(row=r,column=4).value
