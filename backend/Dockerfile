@@ -17,19 +17,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy only requirements first (better build caching)
-COPY backend/requirements.txt /app/requirements.txt
+# (Context is already backend/, so copy directly)
+COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Install Playwright browsers (Chromium) and its OS deps
 RUN python -m playwright install --with-deps chromium
 
-# Copy the backend app code
-COPY backend /app
+# Copy the backend app code (everything from backend/)
+COPY . /app
 
 # Expose Render's PORT
 ENV PORT=10000
 ENV PYTHONPATH=/app
 
 # Use gunicorn to serve Flask (bind to 0.0.0.0:$PORT)
-# If your Flask app file is named flasks.py with a variable `app`, WSGI path is flasks:app
+# If your Flask app file is named flasks.py with a variable app, WSGI path is flasks:app
 CMD exec gunicorn --bind 0.0.0.0:${PORT} --workers 2 --threads 4 --timeout 120 flasks:app
