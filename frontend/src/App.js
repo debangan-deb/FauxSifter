@@ -15,7 +15,7 @@ export default function App(){
     if(!isValidAmazon(url))return show('Only valid Amazon /dp/ASIN links are allowed.','danger');
     setLoading(true);
     try{
-      const res=await fetch('http://localhost:5000/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+      const res=await fetch('https://fauxsifter.onrender.com/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
       if(res.status===404)return show('No reviews found for this product.','warning');
       if(!res.ok)return show('Processing failed. Please try again.','danger');
       const b=await res.blob(); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='predicted_reviews.xlsx'; document.body.appendChild(a); a.click(); a.remove();
