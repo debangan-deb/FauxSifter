@@ -21,7 +21,7 @@ def predict():
         br=p.chromium.launch(headless=True,args=["--disable-dev-shm-usage","--no-sandbox"])
         ctx=br.new_context(storage_state="amazon_auth.json",viewport={"width":1280,"height":1800},locale="en-IN",
             user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"))
-        ctx.route("**/*",lambda r:r.abort() if r.request.resource_type in ("image","media","font") else r.continue_())
+        ctx.route("/*",lambda r:r.abort() if r.request.resource_type in ("image","media","font") else r.continue_())
         pg=ctx.new_page(); pg.set_default_timeout(6000)
         pg.goto(rurl(asin,1),wait_until="domcontentloaded"); pg.wait_for_selector('[data-hook="review"]')
         try: title=(pg.locator("#cm_cr-product_info .a-link-normal").first.text_content(timeout=1200) or "").strip() or "UNKNOWN"
@@ -110,4 +110,4 @@ def predict():
     return send_file(final,as_attachment=True,download_name=EXCEL_FILENAME,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-if __name__=='__main__': app.run(debug=True)
+if __name__ =='main_': app.run(debug=True)
