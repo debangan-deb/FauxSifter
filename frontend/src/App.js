@@ -56,7 +56,7 @@ export default function App(){
                 <ol className="mb-0 ps-3 text-warning">
                   <li className="mb-3 fs-6">Paste an Amazon link containing <code>/dp/ASIN</code>.</li>
                   <li className="mb-3 fs-6">Server scrapes and classifies reviews (<span className="text-success fw-bold">REAL</span>/<span className="text-danger fw-bold">FAKE</span>).</li>
-                  <li className="mb-1 fs-6">Excel download starts automatically.</li>
+                  <li className="mb-1 fs-6">Excel download starts automatically (~2 mins).</li>
                 </ol>
               </Card.Body>
             </Card>

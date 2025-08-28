@@ -26,7 +26,7 @@ def safe_goto(pg,url,wait="domcontentloaded",timeout=30000,retries=1):
 
 @app.post("/predict")
 def predict():
-    m=re.search(r"/dp/([A-Z0-9]{10})",(request.get_json() or {}).get("url","")); 
+    m=re.search(r"/dp/([A-Z0-9]{10})",(request.get_json() or {}).get("url",""))
     if not m: return "",404
     asin=m.group(1); rows,seen,title,prod_img=[],set(),"UNKNOWN",None
     try:
@@ -34,11 +34,9 @@ def predict():
             br=p.chromium.launch(headless=True,args=["--disable-dev-shm-usage","--no-sandbox"])
             st=BASE/"amazon_auth.json"
             if st.exists():
-                ctx=br.new_context(storage_state=str(st),viewport={"width":1280,"height":1800},locale="en-IN",
-                    user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"))
+                ctx=br.new_context(storage_state=str(st),viewport={"width":1280,"height":1800},locale="en-IN",user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"))
             else:
-                ctx=br.new_context(viewport={"width":1280,"height":1800},locale="en-IN",
-                    user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"))
+                ctx=br.new_context(viewport={"width":1280,"height":1800},locale="en-IN",user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"))
             ctx.route("**/*",lambda r:r.abort() if r.request.resource_type in ("image","media","font") else r.continue_())
             pg=ctx.new_page(); pg.set_default_timeout(15000); pg.set_default_navigation_timeout(45000)
             safe_goto(pg,rurl(asin,1),timeout=35000,retries=1); pg.wait_for_selector('[data-hook="review"]',timeout=15000)
@@ -106,8 +104,8 @@ def predict():
         h=wb.add_format({'bold':True,'font_name':'Arial','font_size':14,'align':'center','valign':'vcenter'})
         n=wb.add_format({'font_name':'Arial','font_size':14,'align':'center','valign':'vcenter'})
         sh.set_column('A:H',25); sh.set_column('I:I',20); [sh.set_row(r,28) for r in range(0,11)]
+        if img_buf: sh.insert_image('A1','product.png',{'image_data':img_buf,'x_scale':0.8,'y_scale':0.8})
         sh.merge_range('A1:C10','',n); sh.merge_range('D1:G10',(title or "UNKNOWN").upper(),h)
-        if img_buf: sh.insert_image('A1','product.png',{'image_data':img_buf,'x_scale':0.9,'y_scale':0.9})
         sh.write_row('A14',["SL NO","REVIEW TITLE","REVIEW TEXT","USED TEXT","TEXT SOURCE","REVIEWER","REVIEW DATE","RATING"],h); sh.write('I14','LABELS',h)
     out.seek(0)
     wb2=load_workbook(out); ws=wb2["Sheet1"]; al=Alignment(horizontal='center',vertical='center')
@@ -125,7 +123,6 @@ def predict():
         cell=ws.cell(row=r,column=9,value="REAL" if p else "FAKE"); cell.font=Font(name='Arial',size=14,bold=not p)
         if not p: cell.fill=PatternFill(start_color="FFFF00",end_color="FFFF00",fill_type="solid")
     final=io.BytesIO(); wb2.save(final); wb2.close(); final.seek(0)
-    return send_file(final,as_attachment=True,download_name=EXCEL,
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    return send_file(final,as_attachment=True,download_name=EXCEL,mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 if __name__=="__main__": app.run()
