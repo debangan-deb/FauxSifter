@@ -3,8 +3,6 @@ from flask_cors import CORS
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 from pathlib import Path
 import re, requests, io, time, json, pandas as pd, joblib
-from openpyxl import load_workbook
-from openpyxl.styles import Font, PatternFill, Alignment
 from PIL import Image as PILImage, ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES=True
 
@@ -34,9 +32,11 @@ def predict():
             br=p.chromium.launch(headless=True,args=["--disable-dev-shm-usage","--no-sandbox"])
             st=BASE/"amazon_auth.json"
             if st.exists():
-                ctx=br.new_context(storage_state=str(st),viewport={"width":1280,"height":1800},locale="en-IN",user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"))
+                ctx=br.new_context(storage_state=str(st),viewport={"width":1280,"height":1800},locale="en-IN",
+                    user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"))
             else:
-                ctx=br.new_context(viewport={"width":1280,"height":1800},locale="en-IN",user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"))
+                ctx=br.new_context(viewport={"width":1280,"height":1800},locale="en-IN",
+                    user_agent=("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"))
             ctx.route("**/*",lambda r:r.abort() if r.request.resource_type in ("image","media","font") else r.continue_())
             pg=ctx.new_page(); pg.set_default_timeout(15000); pg.set_default_navigation_timeout(45000)
             safe_goto(pg,rurl(asin,1),timeout=35000,retries=1); pg.wait_for_selector('[data-hook="review"]',timeout=15000)
@@ -87,6 +87,15 @@ def predict():
             prod_img=big_img(pg); br.close()
     except PWTimeout: return jsonify(error="timeout"),504
     except Exception as e: print("playwright:",repr(e)); return jsonify(error="scrape failed"),500
+
+    if not rows: return "",404
+    texts=[r[3] for r in rows]
+    model=joblib.load(BASE/"svm_model.pkl")
+    preds=model.predict(pd.Series(texts))
+    labels=["REAL" if p else "FAKE" for p in preds]
+    df=pd.DataFrame([[i+1,*row[1:],lab] for i,(row,lab) in enumerate(zip(rows,labels))],
+                    columns=["SL NO","Review Title","Review Text","Used Text","Text Source","Reviewer Name","Review Date","Rating","LABELS"])
+
     img_buf=None
     if prod_img:
         try:
@@ -95,34 +104,30 @@ def predict():
             if im.mode in ("P","RGBA","LA"): im=im.convert("RGB")
             img_buf=io.BytesIO(); im.save(img_buf,format="PNG"); img_buf.seek(0)
         except Exception as e: print("img:",e)
-    if not rows: return "",404
-    df=pd.DataFrame(rows,columns=["SL NO","Review Title","Review Text","Used Text","Text Source","Reviewer Name","Review Date","Rating"]); df["SL NO"]=range(1,len(df)+1)
+
     out=io.BytesIO()
     with pd.ExcelWriter(out,engine="xlsxwriter") as w:
         df.to_excel(w,index=False,header=False,startrow=15,startcol=0,sheet_name="Sheet1")
         sh=w.sheets['Sheet1']; wb=w.book
         h=wb.add_format({'bold':True,'font_name':'Arial','font_size':14,'align':'center','valign':'vcenter'})
         n=wb.add_format({'font_name':'Arial','font_size':14,'align':'center','valign':'vcenter'})
-        sh.set_column('A:H',25); sh.set_column('I:I',20); [sh.set_row(r,28) for r in range(0,11)]
+        normal=wb.add_format({'font_name':'Arial','font_size':14,'align':'center','valign':'vcenter'})
+        sh.set_column('A:H',25); sh.set_column('I:I',20)
+        for r in range(0,11): sh.set_row(r,28)
+
         if img_buf: sh.insert_image('A1','product.png',{'image_data':img_buf,'x_scale':0.8,'y_scale':0.8})
-        sh.merge_range('A1:C10','',n); sh.merge_range('D1:G10',(title or "UNKNOWN").upper(),h)
-        sh.write_row('A14',["SL NO","REVIEW TITLE","REVIEW TEXT","USED TEXT","TEXT SOURCE","REVIEWER","REVIEW DATE","RATING"],h); sh.write('I14','LABELS',h)
+        sh.merge_range('A1:C10','',n)
+        sh.merge_range('D1:G10',(title or "UNKNOWN").upper(),h)
+
+        sh.write_row('A14',["SL NO","REVIEW TITLE","REVIEW TEXT","USED TEXT","TEXT SOURCE","REVIEWER","REVIEW DATE","RATING","LABELS"],h)
+
+        sh.conditional_format('I16:I10000', {'type':'text','criteria':'containing','value':'FAKE',
+                                             'format': wb.add_format({'bold':True,'font_name':'Arial','font_size':14,'bg_color':'#FFFF00','align':'center','valign':'vcenter'})})
+        sh.conditional_format('A16:H10000', {'type':'no_blanks','format':normal})
+        sh.conditional_format('A16:H10000', {'type':'blanks','format':normal})
+
     out.seek(0)
-    wb2=load_workbook(out); ws=wb2["Sheet1"]; al=Alignment(horizontal='center',vertical='center')
-    for r in ws.iter_rows(min_row=1,max_row=ws.max_row,min_col=1,max_col=ws.max_column):
-        for c in r: c.alignment=al; c.font=Font(name='Arial',size=14,bold=(c.row==14 or (1<=c.row<=10 and 4<=c.column<=7)))
-    tc=ws["D1"]; tc.value=(title or "UNKNOWN").upper(); tc.font=Font(name='Arial',size=14,bold=True); tc.alignment=al
-    model=joblib.load(BASE/"svm_model.pkl"); texts,idx=[],[]
-    for r in range(16,ws.max_row+1):
-        v=ws.cell(row=r,column=4).value
-        if v and str(v).strip(): texts.append(str(v)); idx.append(r)
-    if not texts:
-        bio=io.BytesIO(); wb2.save(bio); wb2.close(); bio.seek(0); return "",404
-    preds=model.predict(pd.Series(texts))
-    for r,p in zip(idx,preds):
-        cell=ws.cell(row=r,column=9,value="REAL" if p else "FAKE"); cell.font=Font(name='Arial',size=14,bold=not p)
-        if not p: cell.fill=PatternFill(start_color="FFFF00",end_color="FFFF00",fill_type="solid")
-    final=io.BytesIO(); wb2.save(final); wb2.close(); final.seek(0)
-    return send_file(final,as_attachment=True,download_name=EXCEL,mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    return send_file(out,as_attachment=True,download_name=EXCEL,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 if __name__=="__main__": app.run()
