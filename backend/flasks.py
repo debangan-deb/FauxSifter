@@ -113,6 +113,7 @@ def predict():
     wb2=load_workbook(out); ws=wb2["Sheet1"]; al=Alignment(horizontal='center',vertical='center')
     for r in ws.iter_rows(min_row=1,max_row=ws.max_row,min_col=1,max_col=ws.max_column):
         for c in r: c.alignment=al; c.font=Font(name='Arial',size=14,bold=(c.row==14 or (1<=c.row<=10 and 4<=c.column<=7)))
+    tc=ws["D1"]; tc.value=(title or "UNKNOWN").upper(); tc.font=Font(name='Arial',size=14,bold=True); tc.alignment=al
     model=joblib.load(BASE/"svm_model.pkl"); texts,idx=[],[]
     for r in range(16,ws.max_row+1):
         v=ws.cell(row=r,column=4).value
