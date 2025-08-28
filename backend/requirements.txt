@@ -9,3 +9,5 @@ requests
 beautifulsoup4
 lxml
 gunicorn
+pillow
+xlsxwriter
