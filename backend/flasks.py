@@ -28,7 +28,7 @@ def predict():
         except: pass
         def scrape(p):
             data=p.eval_on_selector_all('[data-hook="review"]',"""
-              els=>els.map(e=>{const g=s=>e.querySelector(s);const t=n=>n?(n.textContent||'').trim():'';const a=s=>Array.from(e.querySelectorAll(s)).map(x=>x.textContent.trim()).join(' ').trim();
+               els=>els.map(e=>{const g=s=>e.querySelector(s);const t=n=>n?(n.textContent||'').trim():'';const a=s=>Array.from(e.querySelectorAll(s)).map(x=>x.textContent.trim()).join(' ').trim();
                 const rEl=g('[data-hook="review-star-rating"] .a-icon-alt')||g('.a-icon-alt')||Array.from(e.querySelectorAll('[aria-label]')).find(x=>(x.getAttribute('aria-label')||'').toLowerCase().includes('out of 5 stars'));
                 const rStr=rEl?(rEl.textContent||rEl.getAttribute('aria-label')||'').trim():'';
                 const rating=(rStr.match(/([0-9]+(?:\\.[0-9]+)?)/)||['',''])[1]||'';
