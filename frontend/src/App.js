@@ -15,7 +15,7 @@ export default function App(){
     if(!isValidAmazon(url))return show('Only valid Amazon /dp/ASIN links are allowed.','danger');
     setLoading(true);
     try{
-      const res=await fetch('https://fauxsifter.onrender.com/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+      const res=await fetch('https://debangandeb-FauxSifter.hf.space/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
       if(res.status===404)return show('No reviews found for this product.','warning');
       if(!res.ok)return show('Processing failed. Please try again.','danger');
       const b=await res.blob(); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='predicted_reviews.xlsx'; document.body.appendChild(a); a.click(); a.remove();
@@ -56,7 +56,7 @@ export default function App(){
                 <ol className="mb-0 ps-3 text-warning">
                   <li className="mb-3 fs-6">Paste an Amazon link containing <code className="fs-6">/dp/ASIN</code>.</li>
                   <li className="mb-3 fs-6">Server scrapes and classifies reviews (<span className="text-success fw-bold">REAL</span>/<span className="text-danger fw-bold">FAKE</span>).</li>
-                  <li className="mb-1 fs-6">Excel download starts automatically.</li>
+                  <li className="mb-1 fs-6">Excel download starts automatically (~ 2mins).</li>
                 </ol>
               </Card.Body>
             </Card>
