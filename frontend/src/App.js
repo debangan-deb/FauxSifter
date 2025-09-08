@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useState}from 'react';
 import{Container,Row,Col,Card,Button,Form,InputGroup,Spinner,Toast,ToastContainer}from'react-bootstrap';
 import'bootstrap/dist/css/bootstrap.min.css';
 
-const isValidAmazon=u=>/^(https?:\/\/)?(www\.)?amazon\.[a-z.]+\/.*?\/dp\/[A-Z0-9]{10}/i.test(u.trim());
+const isValidAmazon = u =>/(?:\/dp\/|\/gp\/product\/)([A-Za-z0-9]{10})/.test(u.trim());
 const bgStyle={minHeight:'100vh',background:'radial-gradient(1200px 600px at 10% 10%, rgba(13,202,240,.15), rgba(13,110,253,0) 60%),radial-gradient(1000px 500px at 90% 30%, rgba(25,135,84,.18), rgba(13,110,253,0) 60%),linear-gradient(135deg,#0f172a 0%,#0b1220 100%)'};
 const glassStyle={background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.15)',boxShadow:'0 10px 35px rgba(0,0,0,.35)',backdropFilter:'blur(8px)'};
 
@@ -56,7 +56,7 @@ export default function App(){
                 <ol className="mb-0 ps-3 text-warning">
                   <li className="mb-3 fs-6">Paste an Amazon link containing <code className="fs-6">/dp/ASIN</code>.</li>
                   <li className="mb-3 fs-6">Server scrapes and classifies reviews (<span className="text-success fw-bold">REAL</span>/<span className="text-danger fw-bold">FAKE</span>).</li>
-                  <li className="mb-1 fs-6">Excel download starts automatically (~1.5 mins).</li>
+                  <li className="mb-1 fs-6">Excel download starts automatically.</li>
                 </ol>
               </Card.Body>
             </Card>
