@@ -44,8 +44,10 @@ def rowpx(hpt): return int(hpt*4/3)
 
 @app.post("/predict")
 def predict():
-    m=re.search(r"/dp/([A-Z0-9]{10})",(request.get_json() or {}).get("url","")); 
-    if not m: return "",404
+    url = (request.get_json() or {}).get("url", "")
+    m = re.search(r"(?:/dp/|/gp/product/)([A-Za-z0-9]{10})", url)
+    if not m:
+     return jsonify({"error": "Invalid Amazon link"}), 400
     asin=m.group(1); rows,seen,title,prod_img=[],set(),"UNKNOWN",None
     try:
         with sync_playwright() as p:
